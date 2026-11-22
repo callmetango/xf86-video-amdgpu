@@ -68,7 +68,7 @@ amdgpu_tiling_info_to_modifier(uint64_t tiling_info, int asic_family)
 
 	/* GFX12 and later use a different tiling format */
 	if (asic_family >= AMDGPU_FAMILY_GC_12_0_0) {
-#ifdef HAVE_AMD_FMT_MOD_TILE_VER_GFX12
+#ifdef HAVE_AMD_FMT_MOD_TILE_GFX12
 		uint32_t swizzle_mode = AMDGPU_TILING_GET(tiling_info, GFX12_SWIZZLE_MODE);
 		uint64_t modifier = AMD_FMT_MOD |
 			AMD_FMT_MOD_SET(TILE_VERSION, AMD_FMT_MOD_TILE_VER_GFX12);
