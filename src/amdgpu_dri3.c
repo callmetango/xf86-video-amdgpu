@@ -40,6 +40,11 @@
 #include <amdgpu_drm.h>
 #include <unistd.h>
 
+/* kernel uapi value, for libdrm older than 2.4.114 */
+#ifndef AMD_FMT_MOD_TILE_VER_GFX11
+#define AMD_FMT_MOD_TILE_VER_GFX11 4
+#endif
+
 #ifdef HAVE_SYS_EVENTFD_H
 #include <poll.h>
 #include <sys/eventfd.h>
@@ -136,7 +141,7 @@ amdgpu_tiling_info_to_modifier(uint64_t tiling_info, int asic_family)
 	return DRM_FORMAT_MOD_INVALID;
 }
 
-#ifdef HAVE_SYS_EVENTFD_H
+#ifdef HAVE_DRI3_SYNCOBJ
 struct amdgpu_dri3_syncobj {
     struct dri3_syncobj base;
     uint32_t syncobj_handle;  /* DRM timeline syncobj handle */
@@ -382,7 +387,7 @@ amdgpu_dri3_import_syncobj(ClientPtr client, ScreenPtr screen,
 
     return &amdgpu_syncobj->base;
 }
-#endif /* HAVE_SYS_EVENTFD_H */
+#endif /* HAVE_DRI3_SYNCOBJ */
 
 /* Timeline syncobjs with eventfd notification are a property of the amdgpu
  * kernel driver, so one probe serves every screen. Usable before DRI3 init.
@@ -396,7 +401,7 @@ amdgpu_dri3_syncobj_supported(ScrnInfoPtr scrn)
     if (supported >= 0)
         return supported;
 
-#ifdef HAVE_SYS_EVENTFD_H
+#ifdef HAVE_DRI3_SYNCOBJ
     int drm_fd = AMDGPUEntPriv(scrn)->fd;
     uint64_t cap = 0;
 
@@ -409,7 +414,7 @@ amdgpu_dri3_syncobj_supported(ScrnInfoPtr scrn)
             reason = "no syncobj eventfd";
     }
 #else
-    reason = "built without eventfd";
+    reason = "built without eventfd or libdrm 2.4.116";
 #endif
 
     supported = reason == NULL;
@@ -997,7 +1002,7 @@ amdgpu_dri3_screen_init(ScreenPtr screen)
 
 	pAMDGPUEnt->render_node = drmGetRenderDeviceNameFromFd(pAMDGPUEnt->fd);
 
-#ifdef HAVE_SYS_EVENTFD_H
+#ifdef HAVE_DRI3_SYNCOBJ
 	amdgpu_dri3_screen_info.import_syncobj =
 		amdgpu_dri3_syncobj_supported(scrn) ? amdgpu_dri3_import_syncobj : NULL;
 #else

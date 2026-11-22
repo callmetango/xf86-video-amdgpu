@@ -67,6 +67,14 @@
 #include "xf86drm.h"
 #include "amdgpu_drm.h"
 
+/* kernel uapi values, for libdrm older than 2.4.118 and 2.4.121 */
+#ifndef AMDGPU_FAMILY_GC_11_0_0
+#define AMDGPU_FAMILY_GC_11_0_0 145
+#endif
+#ifndef AMDGPU_FAMILY_GC_12_0_0
+#define AMDGPU_FAMILY_GC_12_0_0 152
+#endif
+
 #include "damage.h"
 #include "globals.h"
 

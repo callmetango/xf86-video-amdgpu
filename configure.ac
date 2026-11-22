@@ -70,8 +70,14 @@ AC_SUBST(xlibre_video_drivers_dir)
 XORG_DRIVER_CHECK_EXT(XV, videoproto)
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.121])
-PKG_CHECK_MODULES(LIBDRM_AMDGPU, [libdrm_amdgpu >= 2.4.121])
+PKG_CHECK_MODULES(LIBDRM, [libdrm >= 2.4.104])
+PKG_CHECK_MODULES(LIBDRM_AMDGPU, [libdrm_amdgpu >= 2.4.104])
+
+# Newer libdrm functions; the features that use them are left out without
+SAVE_LIBS="$LIBS"
+LIBS="$LIBS $LIBDRM_LIBS"
+AC_CHECK_FUNCS([drmModeFormatModifierBlobIterNext drmSyncobjEventfd])
+LIBS="$SAVE_LIBS"
 PKG_CHECK_MODULES(GBM, [gbm])
 
 # Check for DRM header location (Linux uses drm/ subdirectory, BSD may not)
@@ -142,6 +148,11 @@ if test "x$have_eventfd" = xyes; then
 	AC_DEFINE(HAVE_SYS_EVENTFD_H, 1, [sys/eventfd.h, needed for DRI3 sync objects])
 else
 	AC_MSG_WARN([sys/eventfd.h not found, building without DRI3 sync objects])
+fi
+if test "x$have_eventfd" = xyes -a "x$ac_cv_func_drmSyncobjEventfd" = xyes; then
+	AC_DEFINE(HAVE_DRI3_SYNCOBJ, 1, [DRI3 sync objects: eventfd and libdrm 2.4.116])
+elif test "x$have_eventfd" = xyes; then
+	AC_MSG_WARN([libdrm lacks drmSyncobjEventfd (2.4.116), building without DRI3 sync objects])
 fi
 
 SAVE_CPPFLAGS="$CPPFLAGS"

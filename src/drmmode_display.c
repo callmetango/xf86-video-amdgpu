@@ -1817,6 +1817,7 @@ static void drmmode_crtc_cm_init(int drm_fd, xf86CrtcPtr crtc)
 	}
 }
 
+#ifdef HAVE_DRMMODEFORMATMODIFIERBLOBITERNEXT
 /* Add (format, modifier) to the CRTC's list; drop it on allocation failure */
 static void
 drmmode_crtc_add_format_modifier(drmmode_crtc_private_ptr drmmode_crtc,
@@ -1853,6 +1854,7 @@ drmmode_crtc_add_format_modifier(drmmode_crtc_private_ptr drmmode_crtc,
 	f->modifiers = mods;
 	mods[f->num_modifiers++] = modifier;
 }
+#endif
 
 /* Find the CRTC's primary plane and read its IN_FORMATS property */
 static void
@@ -1902,9 +1904,12 @@ drmmode_crtc_init_primary_plane(xf86CrtcPtr crtc, int num)
 		drmModeFreeObjectProperties(props);
 
 		if (has_type && type == DRM_PLANE_TYPE_PRIMARY) {
+#ifdef HAVE_DRMMODEFORMATMODIFIERBLOBITERNEXT
 			drmModePropertyBlobPtr blob = NULL;
+#endif
 
 			drmmode_crtc->primary_plane_id = plane->plane_id;
+#ifdef HAVE_DRMMODEFORMATMODIFIERBLOBITERNEXT
 			if (in_formats)
 				blob = drmModeGetPropertyBlob(fd, in_formats);
 			if (blob) {
@@ -1916,6 +1921,9 @@ drmmode_crtc_init_primary_plane(xf86CrtcPtr crtc, int num)
 									 iter.mod);
 				drmModeFreePropertyBlob(blob);
 			}
+#else
+			(void)in_formats; /* libdrm < 2.4.108: no plane modifiers */
+#endif
 		}
 		drmModeFreePlane(plane);
 	}

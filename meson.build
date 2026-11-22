@@ -16,8 +16,8 @@ randrproto_dep = dependency('randrproto', required: true)
 renderproto_dep = dependency('renderproto', required: true)
 videoproto_dep = dependency('videoproto', required: true)
 xextproto_dep = dependency('xextproto', version: '>=7.1', required: true)
-libdrm_dep = dependency('libdrm', version: '>=2.4.121', required: true)
-libdrm_amdgpu_dep = dependency('libdrm_amdgpu', version: '>=2.4.121', required: true)
+libdrm_dep = dependency('libdrm', version: '>=2.4.104', required: true)
+libdrm_amdgpu_dep = dependency('libdrm_amdgpu', version: '>=2.4.104', required: true)
 gbm_dep = dependency('gbm', required: true)
 
 # Optional dependencies
@@ -52,6 +52,13 @@ if not have_eventfd
   warning('sys/eventfd.h not found, building without DRI3 sync objects')
 endif
 
+# Newer libdrm functions; the features that use them are left out without
+have_blob_iter = cc.has_function('drmModeFormatModifierBlobIterNext', dependencies: libdrm_dep)
+have_syncobj_eventfd = cc.has_function('drmSyncobjEventfd', dependencies: libdrm_dep)
+if have_eventfd and not have_syncobj_eventfd
+  warning('libdrm lacks drmSyncobjEventfd (2.4.116), building without DRI3 sync objects')
+endif
+
 # Config header
 version = meson.project_version()
 # Keep a pre-release suffix such as "-rc1" out of the integer versions.
@@ -69,6 +76,8 @@ config_h.set('HAVE_GBM_BO_USE_FRONT_RENDERING', have_gbm_bo_use_front_rendering 
 config_h.set('HAVE_GBM_BO_USE_LINEAR', have_gbm_bo_use_linear ? 1 : 0)
 config_h.set('HAVE_LIBUDEV', libudev_dep.found() ? 1 : 0)
 config_h.set('HAVE_SYS_EVENTFD_H', have_eventfd ? 1 : false)
+config_h.set('HAVE_DRI3_SYNCOBJ', have_eventfd and have_syncobj_eventfd ? 1 : false)
+config_h.set('HAVE_DRMMODEFORMATMODIFIERBLOBITERNEXT', have_blob_iter ? 1 : false)
 config_h.set('HAVE_REGIONDUPLICATE', have_regionduplicate ? 1 : 0)
 config_h.set('HAVE_XF86_CURSOR_RESET_CURSOR', have_xf86CursorResetCursor ? 1 : 0)
 config_h.set('PACKAGE_NAME', meson.project_name())
